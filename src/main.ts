@@ -64,6 +64,12 @@ const els = {
   btnTutorialNext: $<HTMLButtonElement>("btnTutorialNext"),
   btnShowTutorial: $<HTMLButtonElement>("btnShowTutorial"),
 
+  doneOverlay: $<HTMLElement>("doneOverlay"),
+  doneCount: $<HTMLElement>("doneCount"),
+  doneTotal: $<HTMLElement>("doneTotal"),
+  btnDoneZip: $<HTMLButtonElement>("btnDoneZip"),
+  btnDoneClose: $<HTMLButtonElement>("btnDoneClose"),
+
   zipModal: $<HTMLElement>("zipModal"),
   zipModalOverlay: $<HTMLElement>("zipModalOverlay"),
   zipModalCount: $<HTMLElement>("zipModalCount"),
@@ -566,7 +572,20 @@ async function onSave() {
   const nextIdx = idx + 1;
   if (nextIdx < state.entries.length) {
     await selectEntry(nextIdx);
+  } else {
+    showDoneOverlay();
   }
+}
+
+function showDoneOverlay() {
+  const saved = state.entries.filter((e) => e.editedBlob || e.status === "saved").length;
+  els.doneCount.textContent = String(saved);
+  els.doneTotal.textContent = String(state.entries.length);
+  els.doneOverlay.hidden = false;
+}
+
+function closeDoneOverlay() {
+  els.doneOverlay.hidden = true;
 }
 
 function openZipModal() {
@@ -637,6 +656,11 @@ function bindUi() {
   els.btnZipDownload.addEventListener("click", () => void onZipDownload());
   els.btnCloseZipModal.addEventListener("click", closeZipModal);
   els.zipModalOverlay.addEventListener("click", closeZipModal);
+  els.btnDoneZip.addEventListener("click", () => {
+    closeDoneOverlay();
+    openZipModal();
+  });
+  els.btnDoneClose.addEventListener("click", closeDoneOverlay);
   els.btnTutorialNext.addEventListener("click", nextTutorial);
   els.btnTutorialSkip.addEventListener("click", dismissTutorial);
   els.btnShowTutorial.addEventListener("click", showTutorial);

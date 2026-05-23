@@ -170,6 +170,20 @@
     </main>
 
 
+    <div id="doneOverlay" class="done-overlay" hidden>
+      <div class="done-card">
+        <div class="done-icon">🎉</div>
+        <div class="done-title">すべて編集しました</div>
+        <div class="done-text">
+          保存済 <span id="doneCount">—</span> / <span id="doneTotal">—</span> 枚
+        </div>
+        <div class="done-actions">
+          <button id="btnDoneZip" class="primary big">📦 ZIP でダウンロード</button>
+          <button id="btnDoneClose" class="secondary">閉じる</button>
+        </div>
+      </div>
+    </div>
+
     <div id="zipModal" class="modal" hidden>
       <div class="modal-overlay" id="zipModalOverlay"></div>
       <div class="modal-body">

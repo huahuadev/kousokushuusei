@@ -193,6 +193,29 @@ select {
 }
 .placeholder { color: var(--fg-2); font-size: 13px; }
 
+.done-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+}
+.done-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px 40px;
+  text-align: center;
+  max-width: 440px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+.done-icon { font-size: 56px; line-height: 1; }
+.done-title { font-size: 20px; font-weight: 700; margin: 12px 0 6px; }
+.done-text { color: var(--fg-2); margin-bottom: 22px; }
+.done-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
 .brush-cursor {
   position: fixed;
   pointer-events: none;
