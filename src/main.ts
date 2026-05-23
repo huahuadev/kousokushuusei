@@ -578,8 +578,10 @@ async function onSave() {
 }
 
 function showDoneOverlay() {
-  const saved = state.entries.filter((e) => e.editedBlob || e.status === "saved").length;
-  els.doneCount.textContent = String(saved);
+  const done = state.entries.filter(
+    (e) => e.editedBlob || e.status === "saved" || e.status === "edited"
+  ).length;
+  els.doneCount.textContent = String(done);
   els.doneTotal.textContent = String(state.entries.length);
   els.doneOverlay.hidden = false;
 }
