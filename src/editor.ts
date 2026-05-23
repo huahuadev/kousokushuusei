@@ -29,6 +29,10 @@ export class Editor {
   private locked = false;
   private onLockedAttempt: (() => void) | null = null;
 
+  private lassoSvg: SVGSVGElement | null = null;
+  private lassoPathOuter: SVGPathElement | null = null;
+  private lassoPathInner: SVGPathElement | null = null;
+
   private onChange: (state: EditorState) => void;
 
   constructor(canvas: HTMLCanvasElement, onChange: (state: EditorState) => void) {
@@ -38,6 +42,25 @@ export class Editor {
     this.previewCtx = this.previewCanvas.getContext("2d")!;
     this.onChange = onChange;
     this.bindEvents();
+  }
+
+  setLassoSvg(svg: SVGSVGElement, outer: SVGPathElement, inner: SVGPathElement): void {
+    this.lassoSvg = svg;
+    this.lassoPathOuter = outer;
+    this.lassoPathInner = inner;
+    outer.setAttribute("fill", "none");
+    outer.setAttribute("stroke", "rgba(0,0,0,0.75)");
+    outer.setAttribute("stroke-width", "3");
+    outer.setAttribute("stroke-linecap", "round");
+    outer.setAttribute("stroke-linejoin", "round");
+    outer.setAttribute("vector-effect", "non-scaling-stroke");
+    inner.setAttribute("fill", "none");
+    inner.setAttribute("stroke", "white");
+    inner.setAttribute("stroke-width", "1.5");
+    inner.setAttribute("stroke-linecap", "round");
+    inner.setAttribute("stroke-linejoin", "round");
+    inner.setAttribute("stroke-dasharray", "8 6");
+    inner.setAttribute("vector-effect", "non-scaling-stroke");
   }
 
   private emit(): void {
@@ -67,6 +90,10 @@ export class Editor {
       this.current = new ImageData(new Uint8ClampedArray(data.data), data.width, data.height);
       this.history = [];
       this.lassoPath = [];
+      if (this.lassoSvg) {
+        this.lassoSvg.setAttribute("viewBox", `0 0 ${img.naturalWidth} ${img.naturalHeight}`);
+        this.setLassoVisible(false);
+      }
       this.fitCanvasSize();
     } finally {
       URL.revokeObjectURL(url);
@@ -82,11 +109,12 @@ export class Editor {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.canvas.width = 0;
     this.canvas.height = 0;
+    this.setLassoVisible(false);
     this.emit();
   }
 
   private fitCanvasSize(): void {
-    const wrap = this.canvas.parentElement;
+    const wrap = this.canvas.closest(".canvas-wrap") as HTMLElement | null;
     if (!wrap) return;
     const maxW = wrap.clientWidth - 20;
     const maxH = wrap.clientHeight - 20;
@@ -192,7 +220,7 @@ export class Editor {
     if (this.tool === "lasso") {
       this.previewCtx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
       this.lassoPath = [{ x, y }];
-      this.drawLassoOverlay();
+      this.updateLassoSvg();
     } else if (this.tool === "eraser") {
       this.previewCtx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
       this.previewCtx.fillStyle = "white";
@@ -210,7 +238,7 @@ export class Editor {
     const { x, y } = this.toLocal(e);
     if (this.tool === "lasso") {
       this.lassoPath.push({ x, y });
-      this.drawLassoOverlay();
+      this.updateLassoSvg();
     } else if (this.tool === "eraser") {
       this.previewCtx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
       this.previewCtx.fillStyle = "white";
@@ -236,13 +264,10 @@ export class Editor {
       if (this.lassoPath.length >= 3) {
         this.previewCtx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
         this.previewCtx.fillStyle = "white";
-        this.previewCtx.beginPath();
-        this.previewCtx.moveTo(this.lassoPath[0].x, this.lassoPath[0].y);
-        for (const p of this.lassoPath) this.previewCtx.lineTo(p.x, p.y);
-        this.previewCtx.closePath();
-        this.previewCtx.fill();
+        this.fillSmoothPath(this.previewCtx, this.lassoPath);
       }
       this.lassoPath = [];
+      this.updateLassoSvg();
     } else if (this.tool === "eraser") {
       this.previewCtx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
       this.emit();
@@ -283,49 +308,80 @@ export class Editor {
     this.previewCtx.stroke();
   }
 
-  private drawLassoOverlay(): void {
-    if (!this.current) return;
-    this.ctx.putImageData(this.current, 0, 0);
-    if (this.lassoPath.length === 0) return;
-
-    const rect = this.canvas.getBoundingClientRect();
-    const scale = rect.width > 0 ? this.canvas.width / rect.width : 1;
-    const dashLen = 8 * scale;
-    const gapLen = 6 * scale;
-    const widthBlack = 3 * scale;
-    const widthWhite = 1.5 * scale;
-
-    this.ctx.save();
-    this.ctx.lineCap = "butt";
-    this.ctx.lineJoin = "miter";
-
-    if (this.lassoPath.length === 1) {
-      const p = this.lassoPath[0];
-      const r = 4 * scale;
-      this.ctx.fillStyle = "rgba(0,0,0,0.75)";
-      this.ctx.beginPath();
-      this.ctx.arc(p.x, p.y, r + scale, 0, Math.PI * 2);
-      this.ctx.fill();
-      this.ctx.fillStyle = "white";
-      this.ctx.beginPath();
-      this.ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-      this.ctx.fill();
+  private setLassoVisible(visible: boolean): void {
+    if (!this.lassoSvg) return;
+    if (visible) {
+      this.lassoSvg.removeAttribute("hidden");
+      this.lassoSvg.style.display = "block";
     } else {
-      this.ctx.beginPath();
-      this.ctx.moveTo(this.lassoPath[0].x, this.lassoPath[0].y);
-      for (let i = 1; i < this.lassoPath.length; i++) {
-        this.ctx.lineTo(this.lassoPath[i].x, this.lassoPath[i].y);
-      }
-      this.ctx.setLineDash([]);
-      this.ctx.lineWidth = widthBlack;
-      this.ctx.strokeStyle = "rgba(0,0,0,0.75)";
-      this.ctx.stroke();
-      this.ctx.setLineDash([dashLen, gapLen]);
-      this.ctx.lineWidth = widthWhite;
-      this.ctx.strokeStyle = "rgba(255,255,255,1)";
-      this.ctx.stroke();
+      this.lassoSvg.setAttribute("hidden", "");
+      this.lassoSvg.style.display = "none";
     }
-    this.ctx.restore();
+  }
+
+  private updateLassoSvg(): void {
+    if (!this.lassoSvg || !this.lassoPathOuter || !this.lassoPathInner) return;
+    if (this.lassoPath.length === 0) {
+      this.setLassoVisible(false);
+      this.lassoPathOuter.setAttribute("d", "");
+      this.lassoPathInner.setAttribute("d", "");
+      return;
+    }
+    this.setLassoVisible(true);
+    const d = this.buildSvgPathData(this.lassoPath);
+    this.lassoPathOuter.setAttribute("d", d);
+    this.lassoPathInner.setAttribute("d", d);
+  }
+
+  private buildSvgPathData(path: Array<{ x: number; y: number }>): string {
+    if (path.length === 0) return "";
+    if (path.length === 1) {
+      const p = path[0];
+      const r = 0.5;
+      return `M ${p.x - r} ${p.y} a ${r} ${r} 0 1 0 ${r * 2} 0 a ${r} ${r} 0 1 0 ${-r * 2} 0`;
+    }
+    let d = `M ${path[0].x} ${path[0].y}`;
+    if (path.length < 3) {
+      for (let i = 1; i < path.length; i++) d += ` L ${path[i].x} ${path[i].y}`;
+      return d;
+    }
+    for (let i = 1; i < path.length - 1; i++) {
+      const cx = (path[i].x + path[i + 1].x) / 2;
+      const cy = (path[i].y + path[i + 1].y) / 2;
+      d += ` Q ${path[i].x} ${path[i].y} ${cx} ${cy}`;
+    }
+    const last = path[path.length - 1];
+    d += ` L ${last.x} ${last.y}`;
+    return d;
+  }
+
+  private buildSmoothPath(
+    ctx: CanvasRenderingContext2D,
+    path: Array<{ x: number; y: number }>
+  ): void {
+    ctx.beginPath();
+    if (path.length === 0) return;
+    ctx.moveTo(path[0].x, path[0].y);
+    if (path.length < 3) {
+      for (let i = 1; i < path.length; i++) ctx.lineTo(path[i].x, path[i].y);
+      return;
+    }
+    for (let i = 1; i < path.length - 1; i++) {
+      const cx = (path[i].x + path[i + 1].x) / 2;
+      const cy = (path[i].y + path[i + 1].y) / 2;
+      ctx.quadraticCurveTo(path[i].x, path[i].y, cx, cy);
+    }
+    const last = path[path.length - 1];
+    ctx.lineTo(last.x, last.y);
+  }
+
+  private fillSmoothPath(
+    ctx: CanvasRenderingContext2D,
+    path: Array<{ x: number; y: number }>
+  ): void {
+    this.buildSmoothPath(ctx, path);
+    ctx.closePath();
+    ctx.fill();
   }
 
   private repaintWithPreview(): void {

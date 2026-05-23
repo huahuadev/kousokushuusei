@@ -2,7 +2,6 @@ import "./style.css";
 import JSZip from "jszip";
 import { Editor } from "./editor";
 import {
-  BACKUP_DIR,
   deleteBackupFile,
   hasFsAccess,
   mimeForExt,
@@ -42,6 +41,9 @@ const els = {
   imageCount: $<HTMLSpanElement>("imageCount"),
   treeRoot: $<HTMLDivElement>("treeRoot"),
   canvas: $<HTMLCanvasElement>("canvas"),
+  lassoSvg: document.getElementById("lassoSvg") as unknown as SVGSVGElement,
+  lassoPathOuter: document.getElementById("lassoPathOuter") as unknown as SVGPathElement,
+  lassoPathInner: document.getElementById("lassoPathInner") as unknown as SVGPathElement,
   canvasPlaceholder: $<HTMLParagraphElement>("canvasPlaceholder"),
   brushCursor: $<HTMLDivElement>("brushCursor"),
   currentPath: $<HTMLSpanElement>("currentPath"),
@@ -86,6 +88,7 @@ const editor = new Editor(els.canvas, (s) => {
   els.btnUndo.disabled = !s.canUndo;
   els.btnSave.disabled = !s.hasImage;
 });
+editor.setLassoSvg(els.lassoSvg, els.lassoPathOuter, els.lassoPathInner);
 
 async function persistProgress(): Promise<void> {
   if (!state.hasFs || !state.rootInputHandle) return;
@@ -117,7 +120,7 @@ function applyFsSupport() {
 
 function setModeIndicator() {
   if (state.rootInputHandle) {
-    els.modeIndicator.textContent = `保存先: ${state.rootName}/${BACKUP_DIR}/`;
+    els.modeIndicator.textContent = `読み込み先: ${state.rootName}/`;
   } else {
     els.modeIndicator.textContent = "—";
   }

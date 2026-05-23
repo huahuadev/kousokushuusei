@@ -148,7 +148,13 @@
               <button id="btnReset" class="secondary">リセット</button>
             </div>
             <div class="canvas-wrap" id="canvasWrap">
-              <canvas id="canvas"></canvas>
+              <div class="canvas-stack" id="canvasStack">
+                <canvas id="canvas"></canvas>
+                <svg id="lassoSvg" class="lasso-svg" preserveAspectRatio="none" hidden>
+                  <path id="lassoPathOuter" />
+                  <path id="lassoPathInner" />
+                </svg>
+              </div>
               <p class="placeholder" id="canvasPlaceholder">左の一覧から画像を選んでください。</p>
               <div id="brushCursor" class="brush-cursor" hidden></div>
             </div>
