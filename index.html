@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>こーそくしゅーせー β</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="app-title">
+        <h1>こーそくしゅーせー β</h1>
+        <p class="sub">画像にモザイク・ぼかし・黒/白塗りをかけるツール</p>
+      </div>
+      <div class="app-progress">
+        <span id="progressText" class="progress-text"></span>
+      </div>
+    </header>
+
+    <main id="wizard">
+      <!-- ===== Step 1: Pick input folder ===== -->
+      <section id="stepInput" class="wizard-step">
+        <div class="wizard-inner">
+          <div class="step-no">STEP 1</div>
+          <h2>修正したい画像が入っているフォルダを選んでください</h2>
+
+          <div class="folder-diagram">
+            <div class="diagram-caption">こんなフォルダを選ぶと…</div>
+            <div class="diagram-tree">
+              <div class="dt-row dt-folder">📁 my-folder</div>
+              <div class="dt-row dt-image dt-l1"><span class="dt-pipe">├ </span>🖼️ photo1.png</div>
+              <div class="dt-row dt-folder dt-l1"><span class="dt-pipe">├ </span>📁 subfolder</div>
+              <div class="dt-row dt-image dt-l2"><span class="dt-pipe">│ &nbsp; ├ </span>🖼️ photo2.png</div>
+              <div class="dt-row dt-image dt-l2"><span class="dt-pipe">│ &nbsp; └ </span>🖼️ photo3.png</div>
+              <div class="dt-row dt-image dt-l1"><span class="dt-pipe">└ </span>🖼️ photo4.png</div>
+            </div>
+            <div class="diagram-result">
+              <span class="diagram-result-icon">→</span>
+              <span><strong>photo1.png 〜 photo4.png の 4 枚すべて</strong>を読み込みます (jpg / png / webp 対応)</span>
+            </div>
+          </div>
+
+          <button id="btnPickInputBig" class="primary big">画像のフォルダを選ぶ</button>
+
+
+          <div id="fsUnsupported" class="warn-card fs-unsupported" hidden>
+            <div class="warn-card-head">⚠️ このブラウザでは使えません</div>
+            <p>
+              フォルダへの直接書き出しに対応した <strong>Chrome / Edge</strong> でアクセスしてください。<br />
+              (Firefox / Safari では動きません)
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Step 2: Warning before editor ===== -->
+      <section id="stepWarning" class="wizard-step" hidden>
+        <div class="wizard-inner">
+          <div class="step-no">STEP 2</div>
+          <h2>始める前に、これだけ覚えてください</h2>
+          <p class="picked-folder">選んだフォルダ: <strong id="pickedFolderName">—</strong></p>
+          <div class="warn-card">
+            <div class="warn-card-head">⚠️ 編集中、選んだフォルダ内に <code>_image-mask-edited/</code> という保存用サブフォルダが作られます</div>
+            <ul>
+              <li>編集済み画像と進捗が入ります。このデータのおかげで、同じフォルダを読み込むと<strong>続きから再開</strong>できます。</li>
+              <li><strong>中の画像は直接いじらないでください</strong> (進捗とずれて壊れます)。</li>
+            </ul>
+          </div>
+          <div class="warning-actions">
+            <button id="btnBackToInput" class="secondary">← 戻る</button>
+            <button id="btnStartEditing" class="primary big">編集を開始 →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Editor ===== -->
+      <section id="stepEditor" class="wizard-step editor-step" hidden>
+        <div class="toolbar">
+          <button id="btnBackToWizard" class="secondary">← 別のフォルダを開く</button>
+          <button id="btnExportZip" class="secondary highlight-target">📦 ZIP でダウンロード</button>
+          <button id="btnShowTutorial" class="secondary" title="使い方を表示">❓ 使い方</button>
+          <span class="toolbar-sep"></span>
+          <span id="modeIndicator" class="mode-indicator">—</span>
+          <span class="toolbar-spacer"></span>
+          <button id="btnPrev" class="secondary" disabled title="前へ (A / ←)">← 前</button>
+          <button id="btnNext" class="secondary" disabled title="次へ (D / →)">次 →</button>
+        </div>
+
+        <div id="tutorialPopover" class="tutorial-popover" hidden>
+          <div class="tutorial-arrow"></div>
+          <div class="tutorial-body">
+            <div class="tutorial-head">
+              <span class="tutorial-step-no" id="tutorialStepNo">1 / 3</span>
+              <span class="tutorial-title" id="tutorialTitle">—</span>
+            </div>
+            <div class="tutorial-text" id="tutorialText"></div>
+            <div class="tutorial-actions">
+              <button id="btnTutorialSkip" class="tutorial-skip">スキップ</button>
+              <button id="btnTutorialNext" class="primary">次へ →</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="main">
+          <aside class="sidebar">
+            <div class="sidebar-head">
+              <span>画像一覧</span>
+              <span id="imageCount" class="count">0</span>
+            </div>
+            <div id="treeRoot" class="tree">
+              <p class="empty">—</p>
+            </div>
+          </aside>
+
+          <section class="editor-area">
+            <div class="editor-toolbar">
+              <div class="tb-group">
+                ツール:
+                <label><input type="radio" name="tool" value="brush" /> ブラシ</label>
+                <label><input type="radio" name="tool" value="lasso" checked /> 投げ縄</label>
+                <label><input type="radio" name="tool" value="eraser" /> 消しゴム</label>
+              </div>
+              <div class="tb-group">
+                適用:
+                <select id="methodSelect">
+                  <option value="black" selected>黒塗り</option>
+                  <option value="white">白塗り</option>
+                  <option value="mosaic">モザイク</option>
+                  <option value="blur">ぼかし</option>
+                </select>
+              </div>
+              <div class="tb-group">
+                ブラシサイズ:
+                <input type="range" id="brushSize" min="0.5" max="15" step="0.1" value="3" />
+                <span id="brushSizeVal">3.0</span>%
+              </div>
+              <div class="tb-group">
+                モザイク強度:
+                <input type="range" id="blockSize" min="0.2" max="10" step="0.1" value="2.0" />
+                <span id="blockSizeVal">2.0</span>%
+              </div>
+              <div class="tb-group">
+                ぼかし強度:
+                <input type="range" id="blurSigma" min="0.2" max="10" step="0.1" value="1.5" />
+                <span id="blurSigmaVal">1.5</span>%
+              </div>
+              <button id="btnUndo" class="secondary" title="Undo (Z / Ctrl+Z)">Undo</button>
+              <button id="btnReset" class="secondary">リセット</button>
+            </div>
+            <div class="canvas-wrap" id="canvasWrap">
+              <canvas id="canvas"></canvas>
+              <p class="placeholder" id="canvasPlaceholder">左の一覧から画像を選んでください。</p>
+            </div>
+            <div class="editor-footer">
+              <span id="currentPath" class="current-path">—</span>
+              <span class="footer-spacer"></span>
+              <span id="saveStatus" class="save-status"></span>
+              <button id="btnSave" class="primary" disabled title="保存して次へ (S)">保存して次へ</button>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+
+    <div id="zipModal" class="modal" hidden>
+      <div class="modal-overlay" id="zipModalOverlay"></div>
+      <div class="modal-body">
+        <div class="modal-head">
+          <h3>ZIP でダウンロード</h3>
+          <span class="modal-spacer"></span>
+          <button id="btnCloseZipModal" class="secondary">閉じる</button>
+        </div>
+        <div class="modal-list">
+          <p class="hint">
+            <strong>保存済みの画像のみ</strong> ZIP に含まれます。<span id="zipModalCount" class="modal-count">—</span>
+          </p>
+          <div class="style-section">
+            <label class="choice-card">
+              <input type="radio" name="zipStyle" value="flat" checked />
+              <div class="choice-card-body">
+                <div class="choice-title">フラットで ZIP</div>
+                <div class="choice-desc">
+                  すべての画像が 1 つのフォルダに並びます。<br />
+                  <strong>配布に便利</strong>。
+                </div>
+                <div class="mini-diagram">
+                  <span class="md-col">入力<br /><code>my-folder/<br />&nbsp;&nbsp;photo1.png<br />&nbsp;&nbsp;sub/photo2.png</code></span>
+                  <span class="md-arrow">→</span>
+                  <span class="md-col">出力<br /><code>output/<br />&nbsp;&nbsp;photo1.png<br />&nbsp;&nbsp;sub_photo2.png</code></span>
+                </div>
+              </div>
+            </label>
+            <label class="choice-card">
+              <input type="radio" name="zipStyle" value="structured" />
+              <div class="choice-card-body">
+                <div class="choice-title">そのままの構成で ZIP</div>
+                <div class="choice-desc">
+                  元のフォルダと<strong>同じ構造</strong>で並びます。<br />
+                  <strong>差し替えや再投稿で元画像との対応を保ちたい場合はこちら</strong>。
+                </div>
+                <div class="mini-diagram">
+                  <span class="md-col">入力<br /><code>my-folder/<br />&nbsp;&nbsp;photo1.png<br />&nbsp;&nbsp;sub/photo2.png</code></span>
+                  <span class="md-arrow">→</span>
+                  <span class="md-col">出力<br /><code>output/<br />&nbsp;&nbsp;photo1.png<br />&nbsp;&nbsp;sub/photo2.png</code></span>
+                </div>
+              </div>
+            </label>
+          </div>
+          <div class="modal-actions">
+            <button id="btnZipDownload" class="primary big">ダウンロード</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
