@@ -106,6 +106,13 @@ export class Editor {
   setLocked(v: boolean): void { this.locked = v; }
   setOnLockedAttempt(cb: (() => void) | null): void { this.onLockedAttempt = cb; }
 
+  getBrushCssDiameter(): number {
+    if (!this.canvas.width) return 0;
+    const rect = this.canvas.getBoundingClientRect();
+    const scale = rect.width > 0 ? rect.width / this.canvas.width : 1;
+    return this.brushRadius() * 2 * scale;
+  }
+
   undo(): void {
     if (this.history.length === 0) return;
     const prev = this.history.pop()!;
@@ -186,6 +193,11 @@ export class Editor {
       this.previewCtx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
       this.lassoPath = [{ x, y }];
       this.drawLassoOverlay();
+    } else if (this.tool === "eraser") {
+      this.previewCtx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
+      this.previewCtx.fillStyle = "white";
+      this.drawBrushDot(x, y);
+      this.commitEraserSegment();
     } else {
       this.previewCtx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
       this.previewCtx.fillStyle = "white";
@@ -199,6 +211,13 @@ export class Editor {
     if (this.tool === "lasso") {
       this.lassoPath.push({ x, y });
       this.drawLassoOverlay();
+    } else if (this.tool === "eraser") {
+      this.previewCtx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
+      this.previewCtx.fillStyle = "white";
+      this.drawBrushLine(this.lastX, this.lastY, x, y);
+      this.lastX = x;
+      this.lastY = y;
+      this.commitEraserSegment();
     } else {
       this.drawBrushLine(this.lastX, this.lastY, x, y);
       this.lastX = x;
@@ -224,18 +243,25 @@ export class Editor {
         this.previewCtx.fill();
       }
       this.lassoPath = [];
+    } else if (this.tool === "eraser") {
+      this.previewCtx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
+      this.emit();
+      return;
     }
 
     const mask = this.buildMaskFromPreview();
     this.previewCtx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
-
-    if (this.tool === "eraser") {
-      this.current = eraseToOriginal(this.current, this.original!, mask);
-    } else {
-      this.current = applyMaskedMethod(this.current, this.original!, mask, this.method, this.params);
-    }
+    this.current = applyMaskedMethod(this.current, this.original!, mask, this.method, this.params);
     this.repaint();
     this.emit();
+  }
+
+  private commitEraserSegment(): void {
+    if (!this.current || !this.original) return;
+    const mask = this.buildMaskFromPreview();
+    this.current = eraseToOriginal(this.current, this.original, mask);
+    this.previewCtx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
+    this.repaint();
   }
 
   private drawBrushDot(x: number, y: number): void {

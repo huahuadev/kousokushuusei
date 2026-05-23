@@ -43,6 +43,7 @@ const els = {
   treeRoot: $<HTMLDivElement>("treeRoot"),
   canvas: $<HTMLCanvasElement>("canvas"),
   canvasPlaceholder: $<HTMLParagraphElement>("canvasPlaceholder"),
+  brushCursor: $<HTMLDivElement>("brushCursor"),
   currentPath: $<HTMLSpanElement>("currentPath"),
   saveStatus: $<HTMLSpanElement>("saveStatus"),
   methodSelect: $<HTMLSelectElement>("methodSelect"),
@@ -651,10 +652,47 @@ function bindUi() {
   els.btnSave.addEventListener("click", () => void onSave());
   editor.setOnLockedAttempt(onLockedEditAttempt);
 
+  let currentTool: Tool = "lasso";
+  let cursorOnCanvas = false;
+
+  const showCursor = () => {
+    if (currentTool === "lasso" || !cursorOnCanvas) {
+      els.brushCursor.hidden = true;
+      return;
+    }
+    const d = editor.getBrushCssDiameter();
+    if (d <= 0) {
+      els.brushCursor.hidden = true;
+      return;
+    }
+    els.brushCursor.style.width = `${d}px`;
+    els.brushCursor.style.height = `${d}px`;
+    els.brushCursor.classList.toggle("eraser", currentTool === "eraser");
+    els.brushCursor.hidden = false;
+  };
+
   document.querySelectorAll<HTMLInputElement>('input[name="tool"]').forEach((inp) => {
     inp.addEventListener("change", () => {
-      if (inp.checked) editor.setTool(inp.value as Tool);
+      if (inp.checked) {
+        currentTool = inp.value as Tool;
+        editor.setTool(currentTool);
+        showCursor();
+      }
     });
+  });
+
+  els.canvas.addEventListener("pointerenter", () => {
+    cursorOnCanvas = true;
+    showCursor();
+  });
+  els.canvas.addEventListener("pointerleave", () => {
+    cursorOnCanvas = false;
+    els.brushCursor.hidden = true;
+  });
+  els.canvas.addEventListener("pointermove", (e) => {
+    if (els.brushCursor.hidden) return;
+    els.brushCursor.style.left = `${e.clientX}px`;
+    els.brushCursor.style.top = `${e.clientY}px`;
   });
   els.methodSelect.addEventListener("change", () =>
     editor.setMethod(els.methodSelect.value as Method)
@@ -663,6 +701,7 @@ function bindUi() {
     const v = Number(els.brushSize.value);
     els.brushSizeVal.textContent = v.toFixed(1);
     editor.setBrushPercent(v);
+    showCursor();
   });
   els.blockSize.addEventListener("input", () => {
     const v = Number(els.blockSize.value);
