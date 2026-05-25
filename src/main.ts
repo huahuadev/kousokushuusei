@@ -73,6 +73,11 @@ const els = {
   jidouPromoOverlay: $<HTMLElement>("jidouPromoOverlay"),
   btnPromoLater: $<HTMLButtonElement>("btnPromoLater"),
 
+  btnShowTerms: $<HTMLAnchorElement>("btnShowTerms"),
+  termsModal: $<HTMLElement>("termsModal"),
+  termsModalOverlay: $<HTMLElement>("termsModalOverlay"),
+  btnCloseTermsModal: $<HTMLButtonElement>("btnCloseTermsModal"),
+
   zipModal: $<HTMLElement>("zipModal"),
   zipModalOverlay: $<HTMLElement>("zipModalOverlay"),
   zipModalCount: $<HTMLElement>("zipModalCount"),
@@ -661,6 +666,16 @@ function bindUi() {
   els.btnZipDownload.addEventListener("click", () => void onZipDownload());
   els.btnCloseZipModal.addEventListener("click", closeZipModal);
   els.zipModalOverlay.addEventListener("click", closeZipModal);
+  els.btnShowTerms.addEventListener("click", (e) => {
+    e.preventDefault();
+    els.termsModal.hidden = false;
+  });
+  els.btnCloseTermsModal.addEventListener("click", () => {
+    els.termsModal.hidden = true;
+  });
+  els.termsModalOverlay.addEventListener("click", () => {
+    els.termsModal.hidden = true;
+  });
   els.btnDoneZip.addEventListener("click", () => {
     closeDoneOverlay();
     openZipModal();
