@@ -250,25 +250,28 @@ select {
 .promo-text { color: var(--fg-2); font-size: 14px; line-height: 1.7; margin-bottom: 22px; }
 .promo-text strong { color: var(--fg, inherit); }
 .promo-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-.promo-cta {
+a.promo-cta {
   display: inline-block;
-  text-decoration: none;
-  background: var(--accent, #4a90ff);
-  color: white;
+  text-decoration: none !important;
+  background: #4f8cff !important;
+  color: #ffffff !important;
   font-weight: 700;
-  font-size: 15px;
-  padding: 12px 22px;
+  font-size: 16px;
+  padding: 14px 28px;
   border-radius: 8px;
-  border: 1px solid var(--accent, #4a90ff);
-  transition: background 0.15s;
+  border: none;
+  box-shadow: 0 4px 14px rgba(79, 140, 255, 0.4);
+  transition: background 0.15s, transform 0.05s;
+  cursor: pointer;
 }
-.promo-cta:hover { background: var(--accent-2, #3a7adf); }
+a.promo-cta:hover { background: #3a76e6 !important; }
+a.promo-cta:active { transform: translateY(1px); }
 .promo-later {
   background: transparent;
   border: 1px solid var(--border);
-  color: var(--fg-2);
-  padding: 12px 18px;
-  font-size: 13px;
+  color: var(--fg);
+  padding: 14px 20px;
+  font-size: 14px;
   border-radius: 8px;
   cursor: pointer;
 }
