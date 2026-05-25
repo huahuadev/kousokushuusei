@@ -70,6 +70,9 @@ const els = {
   btnDoneZip: $<HTMLButtonElement>("btnDoneZip"),
   btnDoneClose: $<HTMLButtonElement>("btnDoneClose"),
 
+  jidouPromoOverlay: $<HTMLElement>("jidouPromoOverlay"),
+  btnPromoLater: $<HTMLButtonElement>("btnPromoLater"),
+
   zipModal: $<HTMLElement>("zipModal"),
   zipModalOverlay: $<HTMLElement>("zipModalOverlay"),
   zipModalCount: $<HTMLElement>("zipModalCount"),
@@ -787,3 +790,16 @@ function bindUi() {
 applyFsSupport();
 bindUi();
 setStep("input");
+maybeShowJidouPromo();
+
+function maybeShowJidouPromo() {
+  const KEY = "kousokushuusei:jidou-promo-snoozed-at";
+  const SNOOZE_MS = 24 * 60 * 60 * 1000;
+  const snoozedAt = Number(localStorage.getItem(KEY) ?? "0");
+  if (snoozedAt && Date.now() - snoozedAt < SNOOZE_MS) return;
+  els.jidouPromoOverlay.hidden = false;
+  els.btnPromoLater.addEventListener("click", () => {
+    localStorage.setItem(KEY, String(Date.now()));
+    els.jidouPromoOverlay.hidden = true;
+  });
+}

@@ -216,6 +216,56 @@ select {
 .done-text { color: var(--fg-2); margin-bottom: 22px; }
 .done-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 
+.promo-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 16px;
+}
+.promo-card {
+  background: var(--bg-2);
+  border: 1px solid var(--accent, #4a90ff);
+  border-radius: 14px;
+  padding: 32px 36px;
+  text-align: center;
+  max-width: 480px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.55);
+}
+.promo-badge {
+  display: inline-block;
+  background: var(--accent, #4a90ff);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+.promo-title { font-size: 20px; font-weight: 700; margin-bottom: 14px; }
+.promo-text { color: var(--fg-2); font-size: 14px; line-height: 1.7; margin-bottom: 22px; }
+.promo-text strong { color: var(--fg, inherit); }
+.promo-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.promo-cta {
+  display: inline-block;
+  text-decoration: none;
+}
+.promo-foot {
+  margin-top: 18px;
+  color: var(--fg-2);
+  font-size: 12px;
+}
+.promo-foot code {
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
 .brush-cursor {
   position: fixed;
   pointer-events: none;
