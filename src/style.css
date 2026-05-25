@@ -253,18 +253,36 @@ select {
 .promo-cta {
   display: inline-block;
   text-decoration: none;
+  background: var(--accent, #4a90ff);
+  color: white;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 12px 22px;
+  border-radius: 8px;
+  border: 1px solid var(--accent, #4a90ff);
+  transition: background 0.15s;
 }
+.promo-cta:hover { background: var(--accent-2, #3a7adf); }
+.promo-later {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg-2);
+  padding: 12px 18px;
+  font-size: 13px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.promo-later:hover { background: var(--bg-3); }
 .promo-foot {
   margin-top: 18px;
   color: var(--fg-2);
   font-size: 12px;
 }
-.promo-foot code {
-  background: var(--bg);
-  padding: 2px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
+.promo-foot-link {
+  color: var(--accent, #4a90ff);
+  text-decoration: underline;
 }
+.promo-foot-link:hover { color: var(--accent-2, #3a7adf); }
 
 .brush-cursor {
   position: fixed;
